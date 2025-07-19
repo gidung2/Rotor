@@ -533,6 +533,21 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 	}
 }
 
+// Thread wrappers
+#ifdef WIN64
+DWORD WINAPI _FindKeyGPU(LPVOID lpParam) {
+	TH_PARAM* p = (TH_PARAM*)lpParam;
+	p->obj->FindKeyGPU(p);
+	return 0;
+}
+#else
+void* _FindKeyGPU(void* lpParam) {
+	TH_PARAM* p = (TH_PARAM*)lpParam;
+	p->obj->FindKeyGPU(p);
+	return NULL;
+}
+#endif
+
 void Rotor::FindKeyGPU(TH_PARAM * ph)
 {
 	bool ok = true;
