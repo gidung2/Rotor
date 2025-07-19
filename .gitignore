@@ -1,0 +1,14 @@
+# Build artifacts
+obj/
+*.o
+Rotor
+Rotor.exe
+
+# Temporary files
+*.tmp
+*~
+
+# IDE files
+.vscode/
+*.swp
+*.swo

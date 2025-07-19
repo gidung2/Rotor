@@ -31,7 +31,7 @@ void usage()
 	printf("-g, --gpu                                : Enable GPU calculation\n");
 	printf("--gpui GPU ids: 0,1,...                  : List of GPU(s) to use, default is 0\n");
 	printf("--gpux GPU gridsize: g0x,g0y,g1x,g1y,... : Specify GPU(s) kernel gridsize, default is 8*(Device MP count),128\n");
-	printf("-t, --thread N                           : Specify number of CPU thread, default is number of core\n");
+	printf("-t, --thread N                           : Specify number of CPU thread for GPU management, default is number of core\n");
 	printf("-i, --in FILE                            : Read rmd160 hashes or xpoints from FILE, should be in binary format with sorted\n");
 	printf("-o, --out FILE                           : Write keys to FILE, default: Found.txt\n");
 	printf("-m, --mode MODE                          : Specify search mode where MODE is\n");
@@ -492,8 +492,8 @@ int main(int argc, char** argv)
 		//return -1;
 	//}
 
-	if (nbCPUThread > 0 && gpuEnable) {
-		printf("  Error: %s\n", "  Invalid arguments, CPU and GPU, both can't be used together right now\n");
+	if (!gpuEnable) {
+		printf("  Error: %s\n", "  GPU must be enabled. Use -g flag to enable GPU calculation.\n");
 		usage();
 		return -1;
 	}
@@ -577,7 +577,7 @@ int main(int argc, char** argv)
 		printf("  COMP MODE    : %s\n", compMode == SEARCH_COMPRESSED ? "COMPRESSED" : (compMode == SEARCH_UNCOMPRESSED ? "UNCOMPRESSED" : "COMPRESSED & UNCOMPRESSED"));
 	printf("  COIN TYPE    : %s\n", coinType == COIN_BTC ? "BITCOIN" : "ETHEREUM");
 	printf("  SEARCH MODE  : %s\n", searchMode == (int)SEARCH_MODE_MA ? "Multi Address" : (searchMode == (int)SEARCH_MODE_SA ? "Single Address" : (searchMode == (int)SEARCH_MODE_MX ? "Multi X Points" : "Single X Point")));
-	printf("  DEVICE       : %s\n", (gpuEnable && nbCPUThread > 0) ? "  CPU & GPU" : ((!gpuEnable && nbCPUThread > 0) ? "CPU" : "GPU"));
+	printf("  DEVICE       : %s\n", (nbCPUThread > 0) ? "GPU with CPU support" : "GPU");
 	printf("  CPU THREAD   : %d\n", nbCPUThread);
 	nbit2 += nbCPUThread;
 	if (gpuEnable) {
