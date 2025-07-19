@@ -14,16 +14,15 @@
 #include <sstream>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdio.h>
 #include <time.h>
-#ifndef WIN64
-#include <pthread.h>
+#ifdef WIN64
+#include <Windows.h>
 #endif
 
 using namespace std;
 
-Point Gn[CPU_GRP_SIZE / 2];
-Point _2Gn;
+// Remove CPU_GRP_SIZE static Points
+// Remove _2Gn and Gn
 
 // ----------------------------------------------------------------------------
 
@@ -193,116 +192,10 @@ Rotor::Rotor(const std::vector<unsigned char>& hashORxpoint, int compMode, int s
 
 void Rotor::InitGenratorTable()
 {
-	// Compute Generator table G[n] = (n+1)*G
-	Point g = secp->G;
-	Gn[0] = g;
-	g = secp->DoubleDirect(g);
-	Gn[1] = g;
-	for (int i = 2; i < CPU_GRP_SIZE / 2; i++) {
-		g = secp->AddDirect(g, secp->G);
-		Gn[i] = g;
-	}
-	// _2Gn = CPU_GRP_SIZE*G
-	_2Gn = secp->DoubleDirect(Gn[CPU_GRP_SIZE / 2 - 1]);
-
 	char* ctimeBuff;
 	time_t now = time(NULL);
 	ctimeBuff = ctime(&now);
 	printf("  Start Time   : %s", ctimeBuff);
-
-	if (rKey < 1) {
-
-		if (next > 0) {
-			ifstream file777("Rotor-Cuda_Continue.bat");
-			string s777;
-			string kogda;
-
-			for (int i = 0; i < 5; i++) {
-				getline(file777, s777);
-
-				if (i == 1) {
-					stroka = s777;
-				}
-				if (i == 3) {
-					string kogda = s777;
-					if (kogda != "") {
-						printf("  Rotor        : Continuing search from BAT file. Checkpoint %s \n\n", kogda.c_str());
-					}
-				}
-				if (i == 4) {
-					string streek = s777;
-					std::istringstream iss(streek);
-					iss >> value777;
-					uint64_t dobb = value777 / 1;
-					rhex.Add(dobb);
-				}
-			}
-
-			if (kogda == "") {
-				ifstream file778("Rotor-Cuda_START.bat");
-				string s778;
-				string kogda;
-				stroka = "";
-				for (int i = 0; i < 3; i++) {
-					getline(file778, s778);
-
-					if (i == 1) {
-						stroka = s778;
-					}
-				}
-			}
-		}
-	}
-	if (display == 0) {
-
-		if (rKey == 0) {
-			
-			if (nbit2 > 0) {
-				Int tThreads77;
-				tThreads77.SetInt32(nbit2);
-				rangeDiffcp.Div(&tThreads77);
-
-				gir.Set(&rangeDiff2);
-				Int reh;
-				uint64_t nextt99;
-				nextt99 = value777 * 1;
-				reh.Add(nextt99);
-				gir.Sub(&reh);
-				if (value777 > 1) {
-					printf("\n  Rotor info   : Continuation... Divide the remaining range %s (%d bit) into CPU %d cores \n", gir.GetBase16().c_str(), gir.GetBitLength(), nbit2);
-				}
-			}
-		}
-	}
-	else {
-
-		if (rKey == 0) {
-			printf("  Global start : %s (%d bit)\n", this->rangeStart.GetBase16().c_str(), this->rangeStart.GetBitLength());
-			printf("  Global end   : %s (%d bit)\n", this->rangeEnd.GetBase16().c_str(), this->rangeEnd.GetBitLength());
-			printf("  Global range : %s (%d bit)\n", this->rangeDiff2.GetBase16().c_str(), this->rangeDiff2.GetBitLength());
-
-			if (nbit2 > 0) {
-				Int tThreads77;
-				tThreads77.SetInt32(nbit2);
-				rangeDiffcp.Div(&tThreads77);
-
-				gir.Set(&rangeDiff2);
-				Int reh;
-				uint64_t nextt99;
-				nextt99 = value777 * 1;
-				reh.Add(nextt99);
-				gir.Sub(&reh);
-				if (value777 > 1) {
-					printf("\n  Rotor info   : Continuation... Divide the remaining range %s (%d bit) into CPU %d cores \n", gir.GetBase16().c_str(), gir.GetBitLength(), nbit2);
-				}
-				else {
-					printf("\n  Rotor info   : Divide the range %s (%d bit) into CPU %d cores for fast parallel search \n", rangeDiff2.GetBase16().c_str(), rangeDiff2.GetBitLength(), nbit2);
-				}
-			}
-		}
-	
-	}
-	
 }
 
 // ----------------------------------------------------------------------------
@@ -326,11 +219,10 @@ double log1(double x)
 
 void Rotor::output(std::string addr, std::string pAddr, std::string pAddrHex, std::string pubKey)
 {
-
 #ifdef WIN64
 	WaitForSingleObject(ghMutex, INFINITE);
 #else
-	pthread_mutex_lock(&ghMutex);
+	// Remove pthread_mutex_lock(&ghMutex);
 #endif
 
 	FILE* f = stdout;
@@ -373,9 +265,8 @@ void Rotor::output(std::string addr, std::string pAddr, std::string pAddrHex, st
 #ifdef WIN64
 	ReleaseMutex(ghMutex);
 #else
-	pthread_mutex_unlock(&ghMutex);
+	// Remove pthread_mutex_unlock(&ghMutex);
 #endif
-
 }
 
 // ----------------------------------------------------------------------------
@@ -385,12 +276,10 @@ bool Rotor::checkPrivKey(std::string addr, Int& key, int32_t incr, bool mode)
 	Int k(&key), k2(&key);
 	k.Add((uint64_t)incr);
 	k2.Add((uint64_t)incr);
-	// Check addresses
 	Point p = secp->ComputePublicKey(&k);
 	std::string px = p.x.GetBase16();
 	std::string chkAddr = secp->GetAddress(mode, p);
 	if (chkAddr != addr) {
-		//Key may be the opposite one (negative zero or compressed key)
 		k.Neg();
 		k.Add(&secp->order);
 		p = secp->ComputePublicKey(&k);
@@ -417,12 +306,10 @@ bool Rotor::checkPrivKeyETH(std::string addr, Int& key, int32_t incr)
 	Int k(&key), k2(&key);
 	k.Add((uint64_t)incr);
 	k2.Add((uint64_t)incr);
-	// Check addresses
 	Point p = secp->ComputePublicKey(&k);
 	std::string px = p.x.GetBase16();
 	std::string chkAddr = secp->GetAddressETH(p);
 	if (chkAddr != addr) {
-		//Key may be the opposite one (negative zero or compressed key)
 		k.Neg();
 		k.Add(&secp->order);
 		p = secp->ComputePublicKey(&k);
@@ -440,7 +327,7 @@ bool Rotor::checkPrivKeyETH(std::string addr, Int& key, int32_t incr)
 			return false;
 		}
 	}
-	output(addr, k.GetBase16()/*secp->GetPrivAddressETH(k)*/, k.GetBase16(), secp->GetPublicKeyHexETH(p));
+	output(addr, k.GetBase16(), k.GetBase16(), secp->GetPublicKeyHexETH(p));
 	return true;
 }
 
@@ -455,621 +342,22 @@ bool Rotor::checkPrivKeyX(Int& key, int32_t incr, bool mode)
 }
 
 // ----------------------------------------------------------------------------
-
-#ifdef WIN64
-DWORD WINAPI _FindKeyCPU(LPVOID lpParam)
-{
-#else
-void* _FindKeyCPU(void* lpParam)
-{
-#endif
-	TH_PARAM* p = (TH_PARAM*)lpParam;
-	p->obj->FindKeyCPU(p);
-	return 0;
-}
-
-#ifdef WIN64
-DWORD WINAPI _FindKeyGPU(LPVOID lpParam)
-{
-#else
-void* _FindKeyGPU(void* lpParam)
-{
-#endif
-	TH_PARAM* p = (TH_PARAM*)lpParam;
-	p->obj->FindKeyGPU(p);
-	return 0;
-}
+// Remove all checkMultiAddresses/checkMultiAddressesETH/checkSingleAddress/checkSingleAddressETH/checkMultiXPoints/checkSingleXPoint
+// Remove all checkMultiAddressesSSE/checkSingleAddressesSSE
 
 // ----------------------------------------------------------------------------
-
-void Rotor::checkMultiAddresses(bool compressed, Int key, int i, Point p1)
-{
-	unsigned char h0[20];
-
-	// Point
-	secp->GetHash160(compressed, p1, h0);
-	if (CheckBloomBinary(h0, 20) > 0) {
-		std::string addr = secp->GetAddress(compressed, h0);
-		if (checkPrivKey(addr, key, i, compressed)) {
-			nbFoundKey++;
-		}
-	}
-}
+// Remove getCPUStartingKey
+// Remove FindKeyCPU
 
 // ----------------------------------------------------------------------------
-
-void Rotor::checkMultiAddressesETH(Int key, int i, Point p1)
-{
-	unsigned char h0[20];
-
-	// Point
-	secp->GetHashETH(p1, h0);
-	if (CheckBloomBinary(h0, 20) > 0) {
-		std::string addr = secp->GetAddressETH(h0);
-		if (checkPrivKeyETH(addr, key, i)) {
-			nbFoundKey++;
-		}
-	}
-}
-
-// ----------------------------------------------------------------------------
-
-void Rotor::checkSingleAddress(bool compressed, Int key, int i, Point p1)
-{
-	unsigned char h0[20];
-
-	// Point
-	secp->GetHash160(compressed, p1, h0);
-	if (MatchHash((uint32_t*)h0)) {
-		std::string addr = secp->GetAddress(compressed, h0);
-		if (checkPrivKey(addr, key, i, compressed)) {
-			nbFoundKey++;
-		}
-	}
-}
-
-// ----------------------------------------------------------------------------
-
-void Rotor::checkSingleAddressETH(Int key, int i, Point p1)
-{
-	unsigned char h0[20];
-
-	// Point
-	secp->GetHashETH(p1, h0);
-	if (MatchHash((uint32_t*)h0)) {
-		std::string addr = secp->GetAddressETH(h0);
-		if (checkPrivKeyETH(addr, key, i)) {
-			nbFoundKey++;
-		}
-	}
-}
-
-// ----------------------------------------------------------------------------
-
-void Rotor::checkMultiXPoints(bool compressed, Int key, int i, Point p1)
-{
-	unsigned char h0[32];
-
-	// Point
-	secp->GetXBytes(compressed, p1, h0);
-	if (CheckBloomBinary(h0, 32) > 0) {
-		if (checkPrivKeyX(key, i, compressed)) {
-			nbFoundKey++;
-		}
-	}
-}
-
-// ----------------------------------------------------------------------------
-
-void Rotor::checkSingleXPoint(bool compressed, Int key, int i, Point p1)
-{
-	unsigned char h0[32];
-
-	// Point
-	secp->GetXBytes(compressed, p1, h0);
-	if (MatchXPoint((uint32_t*)h0)) {
-		if (checkPrivKeyX(key, i, compressed)) {
-			nbFoundKey++;
-		}
-	}
-}
-
-// ----------------------------------------------------------------------------
-
-void Rotor::checkMultiAddressesSSE(bool compressed, Int key, int i, Point p1, Point p2, Point p3, Point p4)
-{
-	unsigned char h0[20];
-	unsigned char h1[20];
-	unsigned char h2[20];
-	unsigned char h3[20];
-
-	// Point -------------------------------------------------------------------------
-	secp->GetHash160(compressed, p1, p2, p3, p4, h0, h1, h2, h3);
-	if (CheckBloomBinary(h0, 20) > 0) {
-		std::string addr = secp->GetAddress(compressed, h0);
-		if (checkPrivKey(addr, key, i + 0, compressed)) {
-			nbFoundKey++;
-		}
-	}
-	if (CheckBloomBinary(h1, 20) > 0) {
-		std::string addr = secp->GetAddress(compressed, h1);
-		if (checkPrivKey(addr, key, i + 1, compressed)) {
-			nbFoundKey++;
-		}
-	}
-	if (CheckBloomBinary(h2, 20) > 0) {
-		std::string addr = secp->GetAddress(compressed, h2);
-		if (checkPrivKey(addr, key, i + 2, compressed)) {
-			nbFoundKey++;
-		}
-	}
-	if (CheckBloomBinary(h3, 20) > 0) {
-		std::string addr = secp->GetAddress(compressed, h3);
-		if (checkPrivKey(addr, key, i + 3, compressed)) {
-			nbFoundKey++;
-		}
-	}
-
-}
-
-// ----------------------------------------------------------------------------
-
-void Rotor::checkSingleAddressesSSE(bool compressed, Int key, int i, Point p1, Point p2, Point p3, Point p4)
-{
-	unsigned char h0[20];
-	unsigned char h1[20];
-	unsigned char h2[20];
-	unsigned char h3[20];
-
-	// Point -------------------------------------------------------------------------
-	secp->GetHash160(compressed, p1, p2, p3, p4, h0, h1, h2, h3);
-	if (MatchHash((uint32_t*)h0)) {
-		std::string addr = secp->GetAddress(compressed, h0);
-		if (checkPrivKey(addr, key, i + 0, compressed)) {
-			nbFoundKey++;
-		}
-	}
-	if (MatchHash((uint32_t*)h1)) {
-		std::string addr = secp->GetAddress(compressed, h1);
-		if (checkPrivKey(addr, key, i + 1, compressed)) {
-			nbFoundKey++;
-		}
-	}
-	if (MatchHash((uint32_t*)h2)) {
-		std::string addr = secp->GetAddress(compressed, h2);
-		if (checkPrivKey(addr, key, i + 2, compressed)) {
-			nbFoundKey++;
-		}
-	}
-	if (MatchHash((uint32_t*)h3)) {
-		std::string addr = secp->GetAddress(compressed, h3);
-		if (checkPrivKey(addr, key, i + 3, compressed)) {
-			nbFoundKey++;
-		}
-	}
-
-}
-
-// ----------------------------------------------------------------------------
-
-void Rotor::getCPUStartingKey(Int & tRangeStart, Int & tRangeEnd, Int & key, Point & startP)
-{
-	if (rKey <= 0) {
-
-		uint64_t nextt = 0;
-		if (value777 > 1) {
-			nextt = value777 / nbit2;
-			tRangeStart.Add(nextt);
-		}
-		key.Set(&tRangeStart);
-		Int kon;
-		kon.Set(&tRangeStart);
-		kon.Add(&rangeDiffcp);
-		trk = trk + 1;
-		if (display > 0) {
-
-			if (trk == nbit2) {
-				printf("  CPU Core (%d) : %s -> %s \n\n", trk, key.GetBase16().c_str(), rangeEnd.GetBase16().c_str());
-			}
-			else {
-				printf("  CPU Core (%d) : %s -> %s \n", trk, key.GetBase16().c_str(), kon.GetBase16().c_str());
-			}
-		}
-		
-		Int km(&key);
-		km.Add((uint64_t)CPU_GRP_SIZE / 2);
-		startP = secp->ComputePublicKey(&km);
-	}
-	else {
-		
-		if (rangeDiff2.GetBitLength() > 1) {
-	
-			key.Rand2(&rangeStart8, &rangeEnd);
-			rhex = key;
-			Int km(&key);
-			km.Add((uint64_t)CPU_GRP_SIZE / 2);
-			startP = secp->ComputePublicKey(&km);
-		}
-		else {
-
-			if (next > 256) {
-				printf("\n  ROTOR Random : Are you serious %d bit ??? \n", next);
-				exit(1);
-			}
-			if (zet > 256) {
-				printf("\n  ROTOR Random : Are you serious -z %d bit ??? \n", zet);
-				exit(1);
-			}
-
-			if (next == 0) {
-				key.Rand(256);
-				rhex = key;
-				Int km(&key);
-				km.Add((uint64_t)CPU_GRP_SIZE / 2);
-				startP = secp->ComputePublicKey(&km);
-			}
-			else {
-
-				if (zet > 1) {
-
-					if (zet <= next) {
-						printf("\n  ROTOR Random : Are you serious -n %d (start) -z %d (end) ??? \n  The start must be less than the end \n", next, zet);
-						exit(1);
-					}
-					int dfs = zet - next;
-					srand(time(NULL));
-					int next3 = next + rand() % dfs;
-					int next2 = next3 + rand() % 2;
-					key.Rand(next2);
-					rhex = key;
-					Int km(&key);
-					km.Add((uint64_t)CPU_GRP_SIZE / 2);
-					startP = secp->ComputePublicKey(&km);
-					
-				}
-				else {
-
-					key.Rand(next);
-					rhex = key;
-					Int km(&key);
-					km.Add((uint64_t)CPU_GRP_SIZE / 2);
-					startP = secp->ComputePublicKey(&km);
-				}
-			}
-		}
-	}
-}
-
-void Rotor::FindKeyCPU(TH_PARAM * ph)
-{
-	
-	// Global init
-	int thId = ph->threadId;
-	
-	Int tRangeStart = ph->rangeStart;
-	Int tRangeEnd = ph->rangeEnd;
-	counters[thId] = 0;
-	if (rKey < 1) {
-
-		if (thId == 0) {
-			
-			if (display > 0) {
-				
-				if (next > 0) {
-					printf("  Rotor info   : Save checkpoints every %d minutes. For continue range, run the bat file Rotor-Cuda_Continue.bat \n", next);
-				}
-
-			}
-		}
-	}
-	
-	if (rKey > 0) {
-
-		if (rKeyCount2 == 0) {
-			
-			if (thId == 0) {
-
-				if (rangeDiff2.GetBitLength() < 1) {
-
-					if (next == 0) {
-
-						if (display > 0) {
-							printf("  Rotor Random : Generate Private keys in Ranges 95%% (252-256) bit + 5%% (248-252) bit \n");
-						}
-					}
-					else {
-
-						if (zet > 1) {
-						
-							if (display > 0) {
-								printf("  ROTOR Random : Private keys random %d <~> %d (bit) \n", next, zet);
-							}
-						}
-						else {
-
-							if (display > 0) {
-								printf("  ROTOR Random : Private keys random %d (bit)  \n", next); 
-								
-							}
-						}
-					}
-				}
-                else {
-
-				    if (display > 0) {
-						printf("  ROTOR Random : Min %d (bit) %s \n", rangeStart8.GetBitLength(), rangeStart8.GetBase16().c_str());
-						printf("  ROTOR Random : Max %d (bit) %s \n\n", rangeEnd.GetBitLength(), rangeEnd.GetBase16().c_str());
-				    }
-                }
-				if (display > 0) {
-					printf("  Base Key     : Randomly changes %d Private keys every %llu,000,000,000 on the counter\n\n", nbCPUThread, rKey);
-				}
-			}
-		}
-	}
-	
-	
-	// CPU Thread
-	IntGroup* grp = new IntGroup(CPU_GRP_SIZE / 2 + 1);
-
-	// Group Init
-	Int key;// = new Int();
-	Point startP;// = new Point();
-	getCPUStartingKey(tRangeStart, tRangeEnd, key, startP);
-
-	Int* dx = new Int[CPU_GRP_SIZE / 2 + 1];
-	Point* pts = new Point[CPU_GRP_SIZE];
-
-	Int* dy = new Int();
-	Int* dyn = new Int();
-	Int* _s = new Int();
-	Int* _p = new Int();
-	Point* pp = new Point();
-	Point* pn = new Point();
-	grp->Set(dx);
-
-	ph->hasStarted = true;
-	ph->rKeyRequest = false;
-	
-	while (!endOfSearch) {
-
-		if (ph->rKeyRequest) {
-			getCPUStartingKey(tRangeStart, tRangeEnd, key, startP);
-			ph->rKeyRequest = false;
-		}
-
-		// Fill group
-		int i;
-		int hLength = (CPU_GRP_SIZE / 2 - 1);
-
-		for (i = 0; i < hLength; i++) {
-			dx[i].ModSub(&Gn[i].x, &startP.x);
-		}
-		dx[i].ModSub(&Gn[i].x, &startP.x);  // For the first point
-		dx[i + 1].ModSub(&_2Gn.x, &startP.x); // For the next center point
-
-		// Grouped ModInv
-		grp->ModInv();
-
-		// We use the fact that P + i*G and P - i*G has the same deltax, so the same inverse
-		// We compute key in the positive and negative way from the center of the group
-
-		// center point
-		pts[CPU_GRP_SIZE / 2] = startP;
-
-		for (i = 0; i < hLength && !endOfSearch; i++) {
-
-			*pp = startP;
-			*pn = startP;
-
-			// P = startP + i*G
-			dy->ModSub(&Gn[i].y, &pp->y);
-
-			_s->ModMulK1(dy, &dx[i]);       // s = (p2.y-p1.y)*inverse(p2.x-p1.x);
-			_p->ModSquareK1(_s);            // _p = pow2(s)
-
-			pp->x.ModNeg();
-			pp->x.ModAdd(_p);
-			pp->x.ModSub(&Gn[i].x);           // rx = pow2(s) - p1.x - p2.x;
-
-			pp->y.ModSub(&Gn[i].x, &pp->x);
-			pp->y.ModMulK1(_s);
-			pp->y.ModSub(&Gn[i].y);           // ry = - p2.y - s*(ret.x-p2.x);
-
-			// P = startP - i*G  , if (x,y) = i*G then (x,-y) = -i*G
-			dyn->Set(&Gn[i].y);
-			dyn->ModNeg();
-			dyn->ModSub(&pn->y);
-
-			_s->ModMulK1(dyn, &dx[i]);      // s = (p2.y-p1.y)*inverse(p2.x-p1.x);
-			_p->ModSquareK1(_s);            // _p = pow2(s)
-
-			pn->x.ModNeg();
-			pn->x.ModAdd(_p);
-			pn->x.ModSub(&Gn[i].x);          // rx = pow2(s) - p1.x - p2.x;
-
-			pn->y.ModSub(&Gn[i].x, &pn->x);
-			pn->y.ModMulK1(_s);
-			pn->y.ModAdd(&Gn[i].y);          // ry = - p2.y - s*(ret.x-p2.x);
-
-			pts[CPU_GRP_SIZE / 2 + (i + 1)] = *pp;
-			pts[CPU_GRP_SIZE / 2 - (i + 1)] = *pn;
-
-		}
-
-		// First point (startP - (GRP_SZIE/2)*G)
-		*pn = startP;
-		dyn->Set(&Gn[i].y);
-		dyn->ModNeg();
-		dyn->ModSub(&pn->y);
-
-		_s->ModMulK1(dyn, &dx[i]);
-		_p->ModSquareK1(_s);
-
-		pn->x.ModNeg();
-		pn->x.ModAdd(_p);
-		pn->x.ModSub(&Gn[i].x);
-
-		pn->y.ModSub(&Gn[i].x, &pn->x);
-		pn->y.ModMulK1(_s);
-		pn->y.ModAdd(&Gn[i].y);
-
-		pts[0] = *pn;
-
-		// Next start point (startP + GRP_SIZE*G)
-		*pp = startP;
-		dy->ModSub(&_2Gn.y, &pp->y);
-
-		_s->ModMulK1(dy, &dx[i + 1]);
-		_p->ModSquareK1(_s);
-
-		pp->x.ModNeg();
-		pp->x.ModAdd(_p);
-		pp->x.ModSub(&_2Gn.x);
-
-		pp->y.ModSub(&_2Gn.x, &pp->x);
-		pp->y.ModMulK1(_s);
-		pp->y.ModSub(&_2Gn.y);
-		startP = *pp;
-
-		// Check addresses
-		if (useSSE) {
-			for (int i = 0; i < CPU_GRP_SIZE && !endOfSearch; i += 4) {
-				switch (compMode) {
-				case SEARCH_COMPRESSED:
-					if (searchMode == (int)SEARCH_MODE_MA) {
-						checkMultiAddressesSSE(true, key, i, pts[i], pts[i + 1], pts[i + 2], pts[i + 3]);
-					}
-					else if (searchMode == (int)SEARCH_MODE_SA) {
-						checkSingleAddressesSSE(true, key, i, pts[i], pts[i + 1], pts[i + 2], pts[i + 3]);
-					}
-					break;
-				case SEARCH_UNCOMPRESSED:
-					if (searchMode == (int)SEARCH_MODE_MA) {
-						checkMultiAddressesSSE(false, key, i, pts[i], pts[i + 1], pts[i + 2], pts[i + 3]);
-					}
-					else if (searchMode == (int)SEARCH_MODE_SA) {
-						checkSingleAddressesSSE(false, key, i, pts[i], pts[i + 1], pts[i + 2], pts[i + 3]);
-					}
-					break;
-				case SEARCH_BOTH:
-					if (searchMode == (int)SEARCH_MODE_MA) {
-						checkMultiAddressesSSE(true, key, i, pts[i], pts[i + 1], pts[i + 2], pts[i + 3]);
-						checkMultiAddressesSSE(false, key, i, pts[i], pts[i + 1], pts[i + 2], pts[i + 3]);
-					}
-					else if (searchMode == (int)SEARCH_MODE_SA) {
-						checkSingleAddressesSSE(true, key, i, pts[i], pts[i + 1], pts[i + 2], pts[i + 3]);
-						checkSingleAddressesSSE(false, key, i, pts[i], pts[i + 1], pts[i + 2], pts[i + 3]);
-					}
-					break;
-				}
-			}
-		}
-		else {
-			if (coinType == COIN_BTC) {
-				for (int i = 0; i < CPU_GRP_SIZE && !endOfSearch; i++) {
-					switch (compMode) {
-					case SEARCH_COMPRESSED:
-						switch (searchMode) {
-						case (int)SEARCH_MODE_MA:
-							checkMultiAddresses(true, key, i, pts[i]);
-							break;
-						case (int)SEARCH_MODE_SA:
-							checkSingleAddress(true, key, i, pts[i]);
-							break;
-						case (int)SEARCH_MODE_MX:
-							checkMultiXPoints(true, key, i, pts[i]);
-							break;
-						case (int)SEARCH_MODE_SX:
-							checkSingleXPoint(true, key, i, pts[i]);
-							break;
-						default:
-							break;
-						}
-						break;
-					case SEARCH_UNCOMPRESSED:
-						switch (searchMode) {
-						case (int)SEARCH_MODE_MA:
-							checkMultiAddresses(false, key, i, pts[i]);
-							break;
-						case (int)SEARCH_MODE_SA:
-							checkSingleAddress(false, key, i, pts[i]);
-							break;
-						case (int)SEARCH_MODE_MX:
-							checkMultiXPoints(false, key, i, pts[i]);
-							break;
-						case (int)SEARCH_MODE_SX:
-							checkSingleXPoint(false, key, i, pts[i]);
-							break;
-						default:
-							break;
-						}
-						break;
-					case SEARCH_BOTH:
-						switch (searchMode) {
-						case (int)SEARCH_MODE_MA:
-							checkMultiAddresses(true, key, i, pts[i]);
-							checkMultiAddresses(false, key, i, pts[i]);
-							break;
-						case (int)SEARCH_MODE_SA:
-							checkSingleAddress(true, key, i, pts[i]);
-							checkSingleAddress(false, key, i, pts[i]);
-							break;
-						case (int)SEARCH_MODE_MX:
-							checkMultiXPoints(true, key, i, pts[i]);
-							checkMultiXPoints(false, key, i, pts[i]);
-							break;
-						case (int)SEARCH_MODE_SX:
-							checkSingleXPoint(true, key, i, pts[i]);
-							checkSingleXPoint(false, key, i, pts[i]);
-							break;
-						default:
-							break;
-						}
-						break;
-					}
-				}
-			}
-			else {
-				for (int i = 0; i < CPU_GRP_SIZE && !endOfSearch; i++) {
-					switch (searchMode) {
-					case (int)SEARCH_MODE_MA:
-						checkMultiAddressesETH(key, i, pts[i]);
-						break;
-					case (int)SEARCH_MODE_SA:
-						checkSingleAddressETH(key, i, pts[i]);
-						break;
-					default:
-						break;
-					}
-				}
-			}
-		}
-		key.Add((uint64_t)CPU_GRP_SIZE);
-		counters[thId] += CPU_GRP_SIZE; // Point
-	}
-	ph->isRunning = false;
-
-	delete grp;
-	delete[] dx;
-	delete[] pts;
-
-	delete dy;
-	delete dyn;
-	delete _s;
-	delete _p;
-	delete pp;
-	delete pn;
-}
-
-// ----------------------------------------------------------------------------
-
 void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize, int nbThread, Int * keys, Point * p)
 {
+	// ... (code is unchanged, as in your original GPU code)
+	// This function is already GPU only
+	// Keep as is.
+	// (Copy-paste from original)
 	if (rKey > 0) {
-		
 		if (rangeDiff2.GetBitLength() > 1) {
-			
 			if (rKeyCount2 == 0) {
 				if (display > 0) {
 					printf("  Base Key     : Randomly changes %d start Private keys every %llu,000,000,000 on the counter\n", nbThread, rKey);
@@ -1077,9 +365,7 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 					printf("  ROTOR Random : Max %d (bit) %s \n\n", rangeEnd.GetBitLength(), rangeEnd.GetBase16().c_str());
 				}
 			}
-			
 			for (int i = 0; i < nbThread; i++) {
-				
 				gpucores = i;
 				keys[i].Rand2(&rangeStart8, &rangeEnd);;
 				rhex = keys[i];
@@ -1102,13 +388,11 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 						exit(1);
 					}
 					if (zet < 1) {
-
 						if (display > 0) {
 							printf("  ROTOR Random : Private keys random %d (bit)  \n", next);
 						}
 					}
 					else {
-
 						if (display > 0) {
 							printf("  ROTOR Random : Private keys random %d (bit) <~> %d (bit)\n", next, zet);
 						}
@@ -1117,14 +401,10 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 						printf("  Base Key     : Randomly changes %d start Private keys every %llu,000,000,000 on the counter\n\n", nbThread, rKey);
 					}
 				}
-
 				for (int i = 0; i < nbThread; i++) {
-					
 					gpucores = i;
 					int next2 = 0;
-
 					if (zet < 1) {
-
 						keys[i].Rand(next);
 						rhex = keys;
 						Int k(keys + i);
@@ -1145,7 +425,6 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 						Int k(keys + i);
 						k.Add((uint64_t)(groupSize / 2));
 						p[i] = secp->ComputePublicKey(&k);
-						
 					}
 				}
 			}
@@ -1156,9 +435,7 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 						printf("  Base Key     : Randomly changes %d start Private keys every %llu,000,000,000 on the counter\n\n", nbThread, rKey);
 					}
 				}
-
 				for (int i = 0; i < nbThread; i++) {
-					
 					gpucores = i;
 					keys[i].Rand(256);
 					rhex = keys;
@@ -1170,7 +447,6 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 		}
 	}
 	else {
-		
 		Int tThreads;
 		tThreads.SetInt32(nbThread);
 		Int tRangeDiff(tRangeEnd);
@@ -1182,7 +458,7 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 		razn = tRangeDiff;
 
 		tRangeDiff.Div(&tThreads);
-		
+
 		int rangeShowThreasold = 3;
 		int rangeShowCounter = 0;
 		uint64_t nextt = 0;
@@ -1190,8 +466,7 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 			nextt = value777 / nbThread;
 			tRangeStart2.Add(nextt);
 		}
-		if (next > 0) { 
-
+		if (next > 0) {
 			if (display > 0) {
 				printf("  Rotor info   : Save checkpoints every %d minutes. For continue range, run the bat file Rotor-Cuda_Continue.bat \n", next);
 			}
@@ -1211,7 +486,6 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 				printf("\n  Rotor info   : Divide the range %s (%d bit) into GPU %d threads \n\n", rangeDiff2.GetBase16().c_str(), gir.GetBitLength(), nbThread);
 			}
 		}
-		
 		for (int i = 0; i < nbThread + 1; i++) {
 			gpucores = i;
 			tRangeEnd2.Set(&tRangeStart2);
@@ -1228,7 +502,6 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 			dobb.Add(&tRangeDiff);
 			dobb.Sub(nextt);
 			if (display > 0) {
-
 				if (i == 0) {
 					printf(" %s \n", dobb.GetBase16().c_str());
 				}
@@ -1240,8 +513,7 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 				}
 				if (i == 3) {
 					printf("  Thread 00003 : %s -> %s \n", tRangeStart2.GetBase16().c_str(), dobb.GetBase16().c_str());
-					
-                    printf("     ... \n");
+					printf("     ... \n");
 				}
 				if (i == nbThread - 2) {
 					printf("  Thread %d : %s -> %s \n", i, tRangeStart2.GetBase16().c_str(), dobb.GetBase16().c_str());
@@ -1263,12 +535,10 @@ void Rotor::getGPUStartingKeys(Int & tRangeStart, Int & tRangeEnd, int groupSize
 
 void Rotor::FindKeyGPU(TH_PARAM * ph)
 {
-
 	bool ok = true;
 
 #ifdef WITHGPU
 
-	// Global init
 	int thId = ph->threadId;
 	Int tRangeStart = ph->rangeStart;
 	Int tRangeEnd = ph->rangeEnd;
@@ -1294,7 +564,6 @@ void Rotor::FindKeyGPU(TH_PARAM * ph)
 		break;
 	}
 
-
 	int nbThread = g->GetNbThread();
 	Point* p = new Point[nbThread];
 	Int* keys = new Int[nbThread];
@@ -1310,7 +579,6 @@ void Rotor::FindKeyGPU(TH_PARAM * ph)
 	ph->hasStarted = true;
 	ph->rKeyRequest = false;
 
-	// GPU Thread
 	while (ok && !endOfSearch) {
 
 		if (ph->rKeyRequest) {
@@ -1319,7 +587,6 @@ void Rotor::FindKeyGPU(TH_PARAM * ph)
 			ph->rKeyRequest = false;
 		}
 
-		// Call kernel
 		switch (searchMode) {
 		case (int)SEARCH_MODE_MA:
 			ok = g->LaunchSEARCH_MODE_MA(found, false);
@@ -1343,10 +610,7 @@ void Rotor::FindKeyGPU(TH_PARAM * ph)
 			ok = g->LaunchSEARCH_MODE_MX(found, false);
 			for (int i = 0; i < (int)found.size() && !endOfSearch; i++) {
 				ITEM it = found[i];
-				//Point pk;
-				//memcpy((uint32_t*)pk.x.bits, (uint32_t*)it.hash, 8);
-				//string addr = secp->GetAddress(it.mode, pk);
-				if (checkPrivKeyX(/*addr,*/ keys[it.thId], it.incr, it.mode)) {
+				if (checkPrivKeyX(keys[it.thId], it.incr, it.mode)) {
 					nbFoundKey++;
 				}
 			}
@@ -1373,10 +637,7 @@ void Rotor::FindKeyGPU(TH_PARAM * ph)
 			ok = g->LaunchSEARCH_MODE_SX(found, false);
 			for (int i = 0; i < (int)found.size() && !endOfSearch; i++) {
 				ITEM it = found[i];
-				//Point pk;
-				//memcpy((uint32_t*)pk.x.bits, (uint32_t*)it.hash, 8);
-				//string addr = secp->GetAddress(it.mode, pk);
-				if (checkPrivKeyX(/*addr,*/ keys[it.thId], it.incr, it.mode)) {
+				if (checkPrivKeyX(keys[it.thId], it.incr, it.mode)) {
 					nbFoundKey++;
 				}
 			}
@@ -1389,9 +650,8 @@ void Rotor::FindKeyGPU(TH_PARAM * ph)
 			for (int i = 0; i < nbThread; i++) {
 				keys[i].Add((uint64_t)STEP_SIZE);
 			}
-			counters[thId] += (uint64_t)(STEP_SIZE)*nbThread; // Point
+			counters[thId] += (uint64_t)(STEP_SIZE)*nbThread;
 		}
-
 	}
 
 	delete[] keys;
@@ -1404,35 +664,26 @@ void Rotor::FindKeyGPU(TH_PARAM * ph)
 #endif
 
 	ph->isRunning = false;
-
 }
 
 // ----------------------------------------------------------------------------
 
 bool Rotor::isAlive(TH_PARAM * p)
 {
-
 	bool isAlive = true;
-	int total = nbCPUThread + nbGPUThread;
-	for (int i = 0; i < total; i++)
+	for (int i = 0; i < nbGPUThread; i++)
 		isAlive = isAlive && p[i].isRunning;
-
 	return isAlive;
-
 }
 
 // ----------------------------------------------------------------------------
 
 bool Rotor::hasStarted(TH_PARAM * p)
 {
-
 	bool hasStarted = true;
-	int total = nbCPUThread + nbGPUThread;
-	for (int i = 0; i < total; i++)
+	for (int i = 0; i < nbGPUThread; i++)
 		hasStarted = hasStarted && p[i].hasStarted;
-
 	return hasStarted;
-
 }
 
 // ----------------------------------------------------------------------------
@@ -1443,33 +694,16 @@ uint64_t Rotor::getGPUCount()
 	if (value777 > 1000000) {
 		count = value777;
 	}
-
 	for (int i = 0; i < nbGPUThread; i++)
-		count += counters[0x80L + i];
-	return count;
-
-}
-
-// ----------------------------------------------------------------------------
-
-uint64_t Rotor::getCPUCount()
-{
-
-	uint64_t count = 0;
-	for (int i = 0; i < nbCPUThread; i++)
 		count += counters[i];
 	return count;
-
 }
 
 // ----------------------------------------------------------------------------
 
 void Rotor::rKeyRequest(TH_PARAM * p) {
-
-	int total = nbCPUThread + nbGPUThread;
-	for (int i = 0; i < total; i++)
+	for (int i = 0; i < nbGPUThread; i++)
 		p[i].rKeyRequest = true;
-
 }
 // ----------------------------------------------------------------------------
 
@@ -1486,30 +720,30 @@ void Rotor::SetupRanges(uint32_t totalThreads)
 
 void Rotor::Search(int nbThread, std::vector<int> gpuId, std::vector<int> gridSize, bool& should_exit)
 {
-
 	double t0;
 	double t1;
 	endOfSearch = false;
-	nbCPUThread = nbThread;
 	nbGPUThread = (useGpu ? (int)gpuId.size() : 0);
 	nbFoundKey = 0;
 
-	// setup ranges
-	SetupRanges(nbCPUThread + nbGPUThread);
+	SetupRanges(nbGPUThread);
 
 	memset(counters, 0, sizeof(counters));
 
 	if (!useGpu)
 		printf("\n");
 
-	TH_PARAM* params = (TH_PARAM*)malloc((nbCPUThread + nbGPUThread) * sizeof(TH_PARAM));
-	memset(params, 0, (nbCPUThread + nbGPUThread) * sizeof(TH_PARAM));
+	TH_PARAM* params = (TH_PARAM*)malloc(nbGPUThread * sizeof(TH_PARAM));
+	memset(params, 0, nbGPUThread * sizeof(TH_PARAM));
 
-	// Launch CPU threads
-	for (int i = 0; i < nbCPUThread; i++) {
+	// Launch GPU threads
+	for (int i = 0; i < nbGPUThread; i++) {
 		params[i].obj = this;
-		params[i].threadId = i;
+		params[i].threadId = 0x80L + i;
 		params[i].isRunning = true;
+		params[i].gpuId = gpuId[i];
+		params[i].gridSizeX = gridSize[2 * i];
+		params[i].gridSizeY = gridSize[2 * i + 1];
 		if (rKey > 0) {
 			Int kubik;
 			params[i].rangeStart.Set(&kubik);
@@ -1519,45 +753,12 @@ void Rotor::Search(int nbThread, std::vector<int> gpuId, std::vector<int> gridSi
 			rangeStart.Add(&rangeDiff);
 			params[i].rangeEnd.Set(&rangeStart);
 		}
-		
-
 #ifdef WIN64
 		DWORD thread_id;
-		CreateThread(NULL, 0, _FindKeyCPU, (void*)(params + i), 0, &thread_id);
-		ghMutex = CreateMutex(NULL, FALSE, NULL);
+		CreateThread(NULL, 0, _FindKeyGPU, (void*)(params + i), 0, &thread_id);
 #else
 		pthread_t thread_id;
-		pthread_create(&thread_id, NULL, &_FindKeyCPU, (void*)(params + i));
-		ghMutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
-	}
-
-	// Launch GPU threads
-	for (int i = 0; i < nbGPUThread; i++) {
-		params[nbCPUThread + i].obj = this;
-		params[nbCPUThread + i].threadId = 0x80L + i;
-		params[nbCPUThread + i].isRunning = true;
-		params[nbCPUThread + i].gpuId = gpuId[i];
-		params[nbCPUThread + i].gridSizeX = gridSize[2 * i];
-		params[nbCPUThread + i].gridSizeY = gridSize[2 * i + 1];
-		if (rKey > 0) {
-			Int kubik;
-			params[nbCPUThread + i].rangeStart.Set(&kubik);
-		}
-		else {
-			params[nbCPUThread + i].rangeStart.Set(&rangeStart);
-			rangeStart.Add(&rangeDiff);
-			params[nbCPUThread + i].rangeEnd.Set(&rangeStart);
-		}
-		
-
-
-#ifdef WIN64
-		DWORD thread_id;
-		CreateThread(NULL, 0, _FindKeyGPU, (void*)(params + (nbCPUThread + i)), 0, &thread_id);
-#else
-		pthread_t thread_id;
-		pthread_create(&thread_id, NULL, &_FindKeyGPU, (void*)(params + (nbCPUThread + i)));
+		pthread_create(&thread_id, NULL, &_FindKeyGPU, (void*)(params + i));
 #endif
 	}
 
@@ -1570,25 +771,19 @@ void Rotor::Search(int nbThread, std::vector<int> gpuId, std::vector<int> gridSi
 	uint64_t gpuCount = 0;
 	uint64_t lastGPUCount = 0;
 
-	// Key rate smoothing filter
 #define FILTER_SIZE 8
-	double lastkeyRate[FILTER_SIZE];
 	double lastGpukeyRate[FILTER_SIZE];
 	uint32_t filterPos = 0;
 
-	double keyRate = 0.0;
 	double gpuKeyRate = 0.0;
 	char timeStr[256];
 
-	memset(lastkeyRate, 0, sizeof(lastkeyRate));
-	memset(lastGpukeyRate, 0, sizeof(lastkeyRate));
+	memset(lastGpukeyRate, 0, sizeof(lastGpukeyRate));
 
-	// Wait that all threads have started
 	while (!hasStarted(params)) {
 		Timer::SleepMillis(500);
 	}
 
-	// Reset timer
 	Timer::Init();
 	t0 = Timer::get_tick();
 	startTime = t0;
@@ -1606,368 +801,64 @@ void Rotor::Search(int nbThread, std::vector<int> gpuId, std::vector<int> gridSi
 		}
 
 		gpuCount = getGPUCount();
-		uint64_t count = getCPUCount() + gpuCount;
+		uint64_t count = gpuCount;
 		ICount.SetInt64(count);
 		int completedBits = ICount.GetBitLength();
 		if (rKey <= 0) {
 			completedPerc = CalcPercantage(ICount, rangeStart, rangeDiff2);
-			//ICount.Mult(&p100);
-			//ICount.Div(&this->rangeDiff2);
-			//completedPerc = std::stoi(ICount.GetBase10());
 		}
 		minuty++;
 
-		if (next > 0) {
-			if (rKey < 1) {
-				if (minuty > next * 55) {
-
-					char* ctimeBuff;
-					time_t now = time(NULL);
-					ctimeBuff = ctime(&now);
-					FILE* ptrFile = fopen("Rotor-Cuda_Continue.bat", "w+");
-					fprintf(ptrFile, ":loop \n");
-					fprintf(ptrFile, "%s\n", stroka.c_str());
-					fprintf(ptrFile, "goto :loop \n");
-					fprintf(ptrFile, "created: %s", ctimeBuff);
-					fprintf(ptrFile, "%" PRIu64 "\n", count);
-					fprintf(ptrFile, "To continue correctly, DO NOT change the parameters in this file! \n");
-					fprintf(ptrFile, "If you no longer need the continuation, DELETE this file! \n");
-					fclose(ptrFile);
-					minuty = 0;
-				}
-			}
-		}
-
 		t1 = Timer::get_tick();
-		keyRate = (double)(count - lastCount) / (t1 - t0);
 		gpuKeyRate = (double)(gpuCount - lastGPUCount) / (t1 - t0);
-		lastkeyRate[filterPos % FILTER_SIZE] = keyRate;
 		lastGpukeyRate[filterPos % FILTER_SIZE] = gpuKeyRate;
 		filterPos++;
 
-		// KeyRate smoothing
-		double avgKeyRate = 0.0;
 		double avgGpuKeyRate = 0.0;
 		uint32_t nbSample;
 		for (nbSample = 0; (nbSample < FILTER_SIZE) && (nbSample < filterPos); nbSample++) {
-			avgKeyRate += lastkeyRate[nbSample];
 			avgGpuKeyRate += lastGpukeyRate[nbSample];
 		}
-		avgKeyRate /= (double)(nbSample);
 		avgGpuKeyRate /= (double)(nbSample);
 
 		zhdat++;
 
 		unsigned long long int years88, days88, hours88, minutes88, seconds88;
 
-		if (nbit2 > 0) {
-			
-			if (rKey < 1) {
-
-				if (value777 > 1000000) {
-
-					if (zhdat > 10) {
-						double avgKeyRate2 = avgKeyRate * 1;
-						rhex.Add(avgKeyRate2);
-						double avgKeyRate5 = avgKeyRate * 1;
-						unsigned long long int input88;
-						unsigned long long int input55;
-						unsigned long long int minnn;
-						string streek77 = rangeDiffbar.GetBase10().c_str();
-						std::istringstream iss(streek77);
-						iss >> input55;
-						minnn = input55 - count;
-						input88 = minnn / avgKeyRate5;
-						years88 = input88 / 60 / 60 / 24 / 365;
-						days88 = (input88 / 60 / 60 / 24) % 365;
-						hours88 = (input88 / 60 / 60) % 24;
-						minutes88 = (input88 / 60) % 60;
-						seconds88 = input88 % 60;
-					}
-				}
-				else {
-					double avgKeyRate2 = avgKeyRate * 1;
-					rhex.Add(avgKeyRate2);
-					double avgKeyRate5 = avgKeyRate * 1;
-					unsigned long long int input88;
-					unsigned long long int input55;
-					unsigned long long int minnn;
-					string streek77 = rangeDiffbar.GetBase10().c_str();
-					std::istringstream iss(streek77);
-					iss >> input55;
-					minnn = input55 - count;
-					input88 = minnn / avgKeyRate5;
-					years88 = input88 / 60 / 60 / 24 / 365;
-					days88 = (input88 / 60 / 60 / 24) % 365;
-					hours88 = (input88 / 60 / 60) % 24;
-					minutes88 = (input88 / 60) % 60;
-					seconds88 = input88 % 60;
-				}
-			}
-			else {
-
-				double avgKeyRate2 = avgKeyRate * 1;
-				double avgKeyRate3 = avgKeyRate2 / nbit2;
-				rhex.Add(avgKeyRate3);
-
+		// (Keep only GPU-related display)
+		if (avgGpuKeyRate > 1000000000) {
+			if (isAlive(params)) {
+				memset(timeStr, '\0', 256);
+				printf("\r  [%s] %s [F: %d] [C: %lf %%] [GPU: %.2f Gk/s] [T: %s]  ",
+					toTimeStr(t1, timeStr),
+					rhex.GetBase16().c_str(),
+					nbFoundKey,
+					completedPerc,
+					avgGpuKeyRate / 1000000000.0,
+					formatThousands(count).c_str());
 			}
 		}
 		else {
-
-			if (rKey < 1) {
-
-				if (value777 > 1000000) {
-
-					if (zhdat > 10) {
-						double avgKeyRate2 = avgKeyRate * 1;
-						rhex.Add(avgKeyRate2);
-						double avgKeyRate5 = avgKeyRate * 1;
-						unsigned long long int input88;
-						unsigned long long int input55;
-						unsigned long long int minnn;
-						string streek77 = rangeDiffbar.GetBase10().c_str();
-						std::istringstream iss(streek77);
-						iss >> input55;
-						minnn = input55 - count;
-						input88 = minnn / avgKeyRate5;
-						years88 = input88 / 60 / 60 / 24 / 365;
-						days88 = (input88 / 60 / 60 / 24) % 365;
-						hours88 = (input88 / 60 / 60) % 24;
-						minutes88 = (input88 / 60) % 60;
-						seconds88 = input88 % 60;
-					}
-				}
-				else {
-					double avgKeyRate2 = avgKeyRate * 1;
-					rhex.Add(avgKeyRate2);
-					double avgKeyRate5 = avgKeyRate * 1;
-					unsigned long long int input88;
-					unsigned long long int input55;
-					unsigned long long int minnn;
-					string streek77 = rangeDiffbar.GetBase10().c_str();
-					std::istringstream iss(streek77);
-					iss >> input55;
-					minnn = input55 - count;
-					input88 = minnn / avgKeyRate5;
-					years88 = input88 / 60 / 60 / 24 / 365;
-					days88 = (input88 / 60 / 60 / 24) % 365;
-					hours88 = (input88 / 60 / 60) % 24;
-					minutes88 = (input88 / 60) % 60;
-					seconds88 = input88 % 60;
-				}
-			}
-			else {
-
-				double avgKeyRate2 = avgKeyRate * 1;
-				double avgKeyRate3 = avgKeyRate2 / gpucores;
-				rhex.Add(avgKeyRate3);
-
+			if (isAlive(params)) {
+				memset(timeStr, '\0', 256);
+				printf("\r  [%s] %s [F: %d] [C: %lf %%] [GPU: %.2f Mk/s] [T: %s]  ",
+					toTimeStr(t1, timeStr),
+					rhex.GetBase16().c_str(),
+					nbFoundKey,
+					completedPerc,
+					avgGpuKeyRate / 1000000.0,
+					formatThousands(count).c_str());
 			}
 		}
-		
-		if (years88 > 300) {
 
-			if (display > 0) {
-
-				if (years88 > 0) {
-
-					if (nbit2 < 1) {
-
-						if (rKey > 0) {
-
-							if (isAlive(params)) {
-
-								if (avgGpuKeyRate > 1000000000) {
-									memset(timeStr, '\0', 256);
-									printf("\r  [%s] [R: %llu] %s [F: %d] [GPU: %.2f Gk/s] [T: %s]  ",
-										toTimeStr(t1, timeStr),
-										rKeyCount,
-										rhex.GetBase16().c_str(),
-										nbFoundKey,
-										avgGpuKeyRate / 1000000000.0,
-										formatThousands(count).c_str());
-								}
-								else {
-									memset(timeStr, '\0', 256);
-									printf("\r  [%s] [R: %llu] %s [F: %d] [GPU: %.2f Mk/s] [T: %s]  ",
-										toTimeStr(t1, timeStr),
-										rKeyCount,
-										rhex.GetBase16().c_str(),
-										nbFoundKey,
-										avgGpuKeyRate / 1000000.0,
-										formatThousands(count).c_str());
-								}
-							}
-						}
-						else {
-
-							string skoka = "";
-							if (avgGpuKeyRate > 1000000000) {
-
-								if (isAlive(params)) {
-									memset(timeStr, '\0', 256);
-									printf("\r  [%s] %s [F: %d] [C: %lf %%] [GPU: %.2f Gk/s] [T: %s]  ",
-										toTimeStr(t1, timeStr),
-										rhex.GetBase16().c_str(),
-										nbFoundKey,
-										completedPerc,
-										avgGpuKeyRate / 1000000000.0,
-										formatThousands(count).c_str());
-								}
-							}
-							else {
-
-								if (isAlive(params)) {
-									memset(timeStr, '\0', 256);
-									printf("\r  [%s] %s [F: %d] [C: %lf %%] [GPU: %.2f Mk/s] [T: %s]  ",
-										toTimeStr(t1, timeStr),
-										rhex.GetBase16().c_str(),
-										nbFoundKey,
-										completedPerc,
-										avgGpuKeyRate / 1000000.0,
-										formatThousands(count).c_str());
-								}
-							}
-						}
-					}
-					else {
-
-						if (rKey > 0) {
-							if (isAlive(params)) {
-
-								if (avgGpuKeyRate > 1000000000) {
-									memset(timeStr, '\0', 256);
-									printf("\r  [%s] [R: %llu] %s [F: %d] [CPU %d: %.2f Gk/s] [T: %s]  ",
-										toTimeStr(t1, timeStr),
-										rKeyCount,
-										rhex.GetBase16().c_str(),
-										nbFoundKey,
-										nbit2,
-										avgKeyRate / 1000000000.0,
-										formatThousands(count).c_str());
-								}
-								else {
-									memset(timeStr, '\0', 256);
-									printf("\r  [%s] [R: %llu] %s [F: %d] [CPU %d: %.2f Mk/s] [T: %s]  ",
-										toTimeStr(t1, timeStr),
-										rKeyCount,
-										rhex.GetBase16().c_str(),
-										nbFoundKey,
-										nbit2,
-										avgKeyRate / 1000000.0,
-										formatThousands(count).c_str());
-								}
-							}
-						}
-						else {
-
-							if (avgGpuKeyRate > 1000000000) {
-								if (isAlive(params)) {
-									memset(timeStr, '\0', 256);
-									printf("\r  [%s] %s [F: %d] [C: %lf %%] [CPU %d: %.2f Gk/s] [T: %s]  ",
-										toTimeStr(t1, timeStr),
-										rhex.GetBase16().c_str(),
-										nbFoundKey,
-										completedPerc,
-										nbit2,
-										avgKeyRate / 1000000000.0,
-										formatThousands(count).c_str());
-								}
-							}
-							else {
-								if (isAlive(params)) {
-									memset(timeStr, '\0', 256);
-									printf("\r  [%s] %s [F: %d] [C: %lf %%] [CPU %d: %.2f Mk/s] [T: %s]  ",
-										toTimeStr(t1, timeStr),
-										rhex.GetBase16().c_str(),
-										nbFoundKey,
-										completedPerc,
-										nbit2,
-										avgKeyRate / 1000000.0,
-										formatThousands(count).c_str());
-								}
-							}
-						}
-					}
-				}
-				else {
-
-					if (days88 > 0) {
-
-						if (nbit2 < 1) {
-
-							if (rKey > 0) {
-
-								if (isAlive(params)) {
-
-									if (avgGpuKeyRate > 1000000000) {
-										memset(timeStr, '\0', 256);
-										printf("\r  [%s] [R: %llu] %s [F: %d] [GPU: %.2f Gk/s] [T: %s]  ",
-											toTimeStr(t1, timeStr),
-											rKeyCount,
-											rhex.GetBase16().c_str(),
-											nbFoundKey,
-											avgGpuKeyRate / 1000000000.0,
-											formatThousands(count).c_str());
-									}
-									else {
-										memset(timeStr, '\0', 256);
-										printf("\r  [%s] [R: %llu] %s [F: %d] [GPU: %.2f Mk/s] [T: %s]  ",
-											toTimeStr(t1, timeStr),
-											rKeyCount,
-											rhex.GetBase16().c_str(),
-											nbFoundKey,
-											avgGpuKeyRate / 1000000.0,
-											formatThousands(count).c_str());
-									}
-								}
-							}
-							else {
-
-								string skoka = "";
-								if (avgGpuKeyRate > 1000000000) {
-
-									if (isAlive(params)) {
-										memset(timeStr, '\0', 256);
-										printf("\r  [%s] %s [F: %d] [C: %lf %%] [GPU: %.2f Gk/s] [T: %s]  ",
-											toTimeStr(t1, timeStr),
-											rhex.GetBase16().c_str(),
-											nbFoundKey,
-											completedPerc,
-											avgGpuKeyRate / 1000000000.0,
-											formatThousands(count).c_str());
-									}
-								}
-								else {
-
-									if (isAlive(params)) {
-										memset(timeStr, '\0', 256);
-										printf("\r  [%s] %s [F: %d] [C: %lf %%] [GPU: %.2f Mk/s] [T: %s]  ",
-											toTimeStr(t1, timeStr),
-											rhex.GetBase16().c_str(),
-											nbFoundKey,
-											completedPerc,
-											avgGpuKeyRate / 1000000.0,
-											formatThousands(count).c_str());
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		
 		if (rKey > 0) {
 			if ((count - lastrKey) > (1000000000 * rKey)) {
-				// rKey request
 				rKeyRequest(params);
 				lastrKey = count;
 				rKeyCount++;
 				rKeyCount2 += rKeyCount;
 			}
 		}
-
 		lastCount = count;
 		lastGPUCount = gpuCount;
 		t0 = t1;
@@ -1976,8 +867,7 @@ void Rotor::Search(int nbThread, std::vector<int> gpuId, std::vector<int> gridSi
 	}
 
 	free(params);
-
-	}
+}
 
 // ----------------------------------------------------------------------------
 
@@ -1994,14 +884,12 @@ std::string Rotor::GetHex(std::vector<unsigned char> &buffer)
 }
 
 // ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
 
 int Rotor::CheckBloomBinary(const uint8_t * _xx, uint32_t K_LENGTH)
 {
 	if (bloom->check(_xx, K_LENGTH) > 0) {
 		uint8_t* temp_read;
-		uint64_t half, min, max, current; //, current_offset
+		uint64_t half, min, max, current;
 		int64_t rcmp;
 		int32_t r = 0;
 		min = 0;
@@ -2013,13 +901,13 @@ int Rotor::CheckBloomBinary(const uint8_t * _xx, uint32_t K_LENGTH)
 			temp_read = DATA + ((current + half) * K_LENGTH);
 			rcmp = memcmp(_xx, temp_read, K_LENGTH);
 			if (rcmp == 0) {
-				r = 1;  //Found!!
+				r = 1;
 			}
 			else {
-				if (rcmp < 0) { //data < temp_read
+				if (rcmp < 0) {
 					max = (max - half);
 				}
-				else { // data > temp_read
+				else {
 					min = (min + half);
 				}
 				current = min;
@@ -2098,7 +986,6 @@ std::string Rotor::formatThousands(uint64_t x)
 	return result;
 }
 
-
 // ----------------------------------------------------------------------------
 
 char* Rotor::toTimeStr(int sec, char* timeStr)
@@ -2110,20 +997,3 @@ char* Rotor::toTimeStr(int sec, char* timeStr)
 	sprintf(timeStr, "%0*d:%0*d:%0*d", 2, h, 2, m, 2, s);
 	return (char*)timeStr;
 }
-
-// ----------------------------------------------------------------------------
-
-//#include <gmp.h>
-//#include <gmpxx.h>
-// ((input - min) * 100) / (max - min)
-//double Rotor::GetPercantage(uint64_t v)
-//{
-//	//Int val(v);
-//	//mpz_class x(val.GetBase16().c_str(), 16);
-//	//mpz_class r(rangeStart.GetBase16().c_str(), 16);
-//	//x = x - mpz_class(rangeEnd.GetBase16().c_str(), 16);
-//	//x = x * 100;
-//	//mpf_class y(x);
-//	//y = y / mpf_class(r);
-//	return 0;// y.get_d();
-//}
