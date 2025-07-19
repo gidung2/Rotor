@@ -505,6 +505,7 @@ int main(int argc, char** argv)
 	if (nbCPUThread < 0)
 		nbCPUThread = 0;
 
+#ifdef WIN64
 	struct console
 	{
 		console(unsigned width, unsigned height)
@@ -541,6 +542,14 @@ int main(int argc, char** argv)
 		HANDLE                     hConOut;
 		CONSOLE_SCREEN_BUFFER_INFO csbi;
 	};
+#else
+	struct console
+	{
+		console(unsigned width, unsigned height) {}
+		~console() {}
+		void color(int color = 0x07) {}
+	};
+#endif
 	int color = 0;
 	int bok1 = 0;
 	int bok2 = 0;
@@ -557,8 +566,10 @@ int main(int argc, char** argv)
 	}
 
 	console con(bok1, bok2);
+#ifdef WIN64
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(hConsole, color);
+#endif
 	printf("\n");
 	printf("  Rotor-Cuda v" RELEASE "\n");
 	printf("\n");

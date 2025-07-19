@@ -17,7 +17,9 @@ typedef struct {
     int  gpuId;
     int  gridSizeX;
     int  gridSizeY;
-    // CPU 관련 필드(threadId, isRunning, hasStarted 등) 제거
+    int  threadId;
+    bool isRunning;
+    bool hasStarted;
     Int rangeStart;
     Int rangeEnd;
     bool rKeyRequest;
